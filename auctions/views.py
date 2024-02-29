@@ -15,17 +15,27 @@ from urllib.parse import urlparse
 import requests
 from django.core.files.base import ContentFile
 
-
+@login_required(login_url="login")
 def index(request):
     Listings = Auction_listing.objects.all().filter(is_active=True)
     if request.user.is_authenticated:
         user = User.objects.get(username=request.user.username)
         if user:
             request.session['watchlist_count'] = Watch_list.objects.all().filter(user_id=user).count()
-    return render(request, "auctions/index.html" , {
-        "Listings" : Listings, 
-    })
+        return render(request, "auctions/index.html" , {
+            "Listings" : Listings, 
+        })
+    
+import re
 
+def detect_sql_injection(*args):
+    pattern = r"['\"]"  # single or double quote
+
+    for arg in args:
+        if re.search(pattern, str(arg)):
+            return True
+
+    return False
 
 def login_view(request):
     if request.method == "POST":
@@ -33,6 +43,11 @@ def login_view(request):
         # Attempt to sign user in
         username = request.POST["username"]
         password = request.POST["password"]
+
+        if detect_sql_injection(username, password):
+            return render(request, "auctions/login.html", {
+                "message": "There was an attempt of sql injection!!"
+            })
         user = authenticate(request, username=username, password=password)
 
         # Check if authentication successful
@@ -65,6 +80,10 @@ def register(request):
                 "message": "Passwords must match."
             })
 
+        if detect_sql_injection(username, email, password, confirmation):
+            return render(request, "auctions/register.html", {
+                "message": "There was an attempt of sql injection!!"
+            })
         # Attempt to create new user
         try:
             user = User.objects.create_user(username, email, password)
@@ -115,6 +134,7 @@ def create_listing(request):
         "form" : CreateListing()
     })
 
+@login_required(login_url="login")
 def listing(request, id):
     Listing = Auction_listing.objects.get(pk=id)
     comments = Comments.objects.all().filter(al_id=Listing).order_by('-created_on')
@@ -209,6 +229,7 @@ def add_comment(request, id):
         messages.error(request, "You cannot comment on your own listing", extra_tags='danger')
     return HttpResponseRedirect(reverse("listing",kwargs={'id':id}))
 
+@login_required(login_url="login")
 def categories(request):
     Listings = Auction_listing.objects.all().filter(is_active=True)
     Categories = Auction_listing.objects.values('category').filter(is_active=True).distinct()
@@ -226,6 +247,7 @@ def categories(request):
     "Listings" : Listings, "Categories":Categories,
     })
 
+@login_required(login_url="login")
 def close_listing(request, id):
     Listing = Auction_listing.objects.get(pk=id)
     if Listing.owner() == request.user:
