@@ -14,6 +14,7 @@ from datetime import date
 from urllib.parse import urlparse
 import requests
 from django.core.files.base import ContentFile
+from .utils import Check_is_sql
 
 @login_required(login_url="login")
 def index(request):
@@ -29,12 +30,9 @@ def index(request):
 import re
 
 def detect_sql_injection(*args):
-    pattern = r"['\"]"  # single or double quote
-
-    for arg in args:
-        if re.search(pattern, str(arg)):
-            return True
-
+    # for arg in args:
+    #     if Check_is_sql(str(arg)):
+    #         return True
     return False
 
 def login_view(request):
