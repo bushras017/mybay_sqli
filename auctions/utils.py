@@ -80,7 +80,38 @@ def Entropy(raw_sql):
 
 # get g-score means of each tokens
 def G_means(token_seq, c_name):
-    return 0
+    try:
+        g_scores = [tc_dataframe.loc[token][c_name] for token in token_seq]
+    except KeyError:
+        return 0
+    return sum(g_scores)/len(g_scores) if g_scores else 0 # Average
+
+
+
+# read data from file.
+basedir = os.path.join(settings.BASE_DIR,'trainingdata')
+filelist = os.listdir(basedir)
+df_list = []
+for file in filelist:
+    if file == '.DS_Store':
+        continue
+    df = pd.read_table(os.path.join(basedir,file),names=['raw_sql'], header=None)
+    df['type'] = 'plain' if file.split('.')[0] == 'plain' else 'sqli'
+    df_list.append(df)
+
+# god pandas make to us a dataframe like excel format
+dataframe = pd.concat(df_list, ignore_index=True)
+dataframe.dropna(inplace=True)
+print (dataframe['type'].value_counts())
+
+# tokenize raw sql
+dataframe['sql_tokens'] = dataframe['raw_sql'].map(lambda x: Sql_tokenizer(x))
+
+# get token sequences
+dataframe['token_seq'] = dataframe['sql_tokens'].map(lambda x: GetTokenSeq(x, 3))
+
+_tokens, _types = zip(*[(token,token_type) for token_list,token_type in zip(dataframe['token_seq'], dataframe['type']) for token in token_list])
+tc_dataframe = G_test(pd.Series(_tokens), pd.Series(_types))
 
 def Check_is_sql(sql):
     # do some pre-processing remoce comment /**/, /*!num */
