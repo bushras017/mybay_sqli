@@ -102,7 +102,7 @@ for file in filelist:
 # god pandas make to us a dataframe like excel format
 dataframe = pd.concat(df_list, ignore_index=True)
 dataframe.dropna(inplace=True)
-print (dataframe['type'].value_counts())
+# print (dataframe['type'].value_counts())
 
 # tokenize raw sql
 dataframe['sql_tokens'] = dataframe['raw_sql'].map(lambda x: Sql_tokenizer(x))

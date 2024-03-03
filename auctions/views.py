@@ -15,7 +15,7 @@ from urllib.parse import urlparse
 import requests
 from django.core.files.base import ContentFile
 from .utils import Check_is_sql
-
+from django.conf import settings
 @login_required(login_url="login")
 def index(request):
     Listings = Auction_listing.objects.all().filter(is_active=True)
@@ -29,9 +29,10 @@ def index(request):
     
 import re
 
-def detect_sql_injection(*args):
+def detect_sql_injection(*args, request):
     for arg in args:
         if Check_is_sql(str(arg)):
+            settings.BLOCKED_IPS.append(request.META['REMOTE_ADDR'])
             return True
     return False
 
@@ -42,7 +43,7 @@ def login_view(request):
         username = request.POST["username"]
         password = request.POST["password"]
 
-        if detect_sql_injection(username, password):
+        if detect_sql_injection(username, password, request=request):
             return render(request, "auctions/login.html", {
                 "message": "There was an attempt of sql injection!!"
             })
@@ -78,7 +79,7 @@ def register(request):
                 "message": "Passwords must match."
             })
 
-        if detect_sql_injection(username, email, password, confirmation):
+        if detect_sql_injection(username, email, password, confirmation, request=request):
             return render(request, "auctions/register.html", {
                 "message": "There was an attempt of sql injection!!"
             })
