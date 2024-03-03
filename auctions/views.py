@@ -30,9 +30,9 @@ def index(request):
 import re
 
 def detect_sql_injection(*args):
-    # for arg in args:
-    #     if Check_is_sql(str(arg)):
-    #         return True
+    for arg in args:
+        if Check_is_sql(str(arg)):
+            return True
     return False
 
 def login_view(request):

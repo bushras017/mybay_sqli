@@ -80,11 +80,7 @@ def Entropy(raw_sql):
 
 # get g-score means of each tokens
 def G_means(token_seq, c_name):
-    try:
-        g_scores = [tc_dataframe.loc[token][c_name] for token in token_seq]
-    except KeyError:
-        return 0
-    return sum(g_scores)/len(g_scores) if g_scores else 0 # Average
+    return 0
 
 def Check_is_sql(sql):
     # do some pre-processing remoce comment /**/, /*!num */
